@@ -1087,7 +1087,7 @@ function openRequestModal(){
       <div class="err-msg" id="ask-err">${t('err_required')}</div>
       <div class="modal-actions">
         <button class="btn btn-outline" onclick="closeModal()">${t('btn_cancel')}</button>
-        <button class="btn btn-primary" onclick="submitRequest()">${t('btn_publish')}</button>
+        <button class="btn btn-primary" id="ask-submit-btn" onclick="submitRequest()">${t('btn_publish')}</button>
       </div>
     </div>
   </div>`;
@@ -1117,15 +1117,28 @@ async function submitRequest(){
   const valid = type && urgency && gov && city && street && desc && phone && (fb || insta);
   if(!valid){ document.getElementById('ask-err').style.display='block'; return; }
 
+  const btn = document.getElementById('ask-submit-btn');
+  if(btn.disabled) return; // already submitting — ignore extra clicks
+  btn.disabled = true;
+
   const newId = uid();
   const data = {
     type, urgency, gov, city, street, desc, phone, fb, insta,
     status:'active', createdAt: Date.now(), helpers:[]
   };
-  try{ await window.fbSetDoc(window.fbDoc(window.db,'requests',newId), data); }
-  catch(e){ console.error(e); toast(t('sync_error')); return; }
+  // Mark as "mine" BEFORE writing: the realtime listener can fire the
+  // instant the write starts (before the write is server-confirmed), so
+  // ownership has to already be known at that point or the card briefly
+  // renders as someone else's request.
   myRequestIds.push(newId);
   saveMyRequestIds();
+  try{ await window.fbSetDoc(window.fbDoc(window.db,'requests',newId), data); }
+  catch(e){
+    console.error(e);
+    myRequestIds = myRequestIds.filter(x=>x!==newId);
+    saveMyRequestIds();
+    toast(t('sync_error')); btn.disabled = false; return;
+  }
   closeModal();
   toast(t('toast_request_published'));
   goTo('feed-section');
@@ -1182,15 +1195,24 @@ async function submitHelp(reqId){
   const valid = phone && (fb || insta);
   if(!valid){ document.getElementById('help-err').style.display='block'; return; }
 
+  const btn = document.getElementById('help-submit-btn');
+  if(btn.disabled) return; // already submitting — ignore extra clicks
+  btn.disabled = true;
+
   const helperId = uid();
   const helper = {id:helperId, phone, fb, insta, msg, status:'pending', at:Date.now()};
+  const key = reqId+'::'+helperId;
+  myHelpKeys.push(key);
+  saveMyHelpKeys();
   try{
     await window.fbUpdateDoc(window.fbDoc(window.db,'requests',reqId), {helpers: window.fbArrayUnion(helper)});
-  }catch(e){ console.error(e); toast(t('sync_error')); return; }
-  myHelpKeys.push(reqId+'::'+helperId);
-  saveMyHelpKeys();
+  }catch(e){
+    console.error(e);
+    myHelpKeys = myHelpKeys.filter(k=>k!==key);
+    saveMyHelpKeys();
+    toast(t('sync_error')); btn.disabled = false; return;
+  }
 
-  document.getElementById('help-submit-btn').disabled = true;
   document.getElementById('help-reveal').innerHTML = `
     <div class="reveal-box">
       <b>${t('offer_sent_title')}</b>
@@ -1278,10 +1300,15 @@ async function submitReport(){
   const note = document.getElementById('r-note').value.trim();
   if(!target){ document.getElementById('report-err').style.display='block'; return; }
   const reportId = uid();
-  try{ await window.fbSetDoc(window.fbDoc(window.db,'reports',reportId), {target, reason, note, createdAt:Date.now()}); }
-  catch(e){ console.error(e); toast(t('sync_error')); return; }
   myReportIds.push(reportId);
   saveMyReportIds();
+  try{ await window.fbSetDoc(window.fbDoc(window.db,'reports',reportId), {target, reason, note, createdAt:Date.now()}); }
+  catch(e){
+    console.error(e);
+    myReportIds = myReportIds.filter(x=>x!==reportId);
+    saveMyReportIds();
+    toast(t('sync_error')); return;
+  }
   closeModal();
   toast(t('toast_report_sent'));
 }
@@ -1302,3 +1329,4 @@ if(window.db){ init(); } else { window.addEventListener('firebase-ready', init);
 </script>
 </body>
 </html>
+
