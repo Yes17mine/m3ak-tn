@@ -254,6 +254,7 @@ footer{border-top:1px solid var(--line); padding:34px 0; color:var(--stone-dim);
       <button class="navlink" onclick="openReportModal()" data-i18n="nav_report">Signaler</button>
       <div class="langtoggle">
         <button id="lang-fr" class="active" onclick="setLang('fr')">FR</button>
+        <button id="lang-en" onclick="setLang('en')">EN</button>
         <button id="lang-ar" onclick="setLang('ar')">عربي</button>
       </div>
       <button class="btn btn-help btn-sm" onclick="openOfferBrowse()" data-i18n="nav_offer_short">Offrir de l'aide</button>
@@ -333,7 +334,7 @@ footer{border-top:1px solid var(--line); padding:34px 0; color:var(--stone-dim);
     </div>
 
     <div class="manifesto">
-      <p data-i18n="manifesto_1"><strong>L'aide gratuite est fortement encouragée.</strong> Cette crise n'est pas une occasion de faire du profit ni de facturer des sommes déraisonnables — c'est une occasion pour les Tunisiens de se serrer les coudes.</p>
+      <p data-i18n-html="manifesto_1"><strong>L'aide gratuite est fortement encouragée.</strong> Cette crise n'est pas une occasion de faire du profit ni de facturer des sommes déraisonnables — c'est une occasion pour les Tunisiens de se serrer les coudes.</p>
       <p data-i18n="manifesto_2">Si une contribution est proposée, elle doit rester symbolique et librement acceptée par les deux parties. Toute pression ou tarif abusif peut être signalé.</p>
     </div>
 
@@ -370,17 +371,87 @@ footer{border-top:1px solid var(--line); padding:34px 0; color:var(--stone-dim);
 <div id="modal-root"></div>
 <div id="toast-root"></div>
 
+<!--
+  ============================================================================
+  BACKEND: Firebase Firestore (free tier, realtime, scales to many concurrent
+  users on its own — GitHub Pages only serves static files, it cannot store
+  or sync data by itself, which is why alerts/offers never reached anyone).
+
+  SETUP (one-time, ~5 minutes):
+  1. Go to https://console.firebase.google.com → "Add project" (free).
+  2. In the project, click "Build > Firestore Database" → "Create database"
+     → start in PRODUCTION mode → pick a region close to Tunisia (e.g.
+     europe-west1).
+  3. In Firestore > Rules, paste the rules given in the chat reply and
+     click "Publish".
+  4. In Project settings (gear icon) > General > "Your apps" > click the
+     "</>" web icon > register the app (no hosting needed) > copy the
+     firebaseConfig object it gives you.
+  5. Paste that object below, replacing the placeholder values.
+  ============================================================================
+-->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import {
+    getFirestore, collection, doc, setDoc, updateDoc, deleteDoc,
+    onSnapshot, query, orderBy, arrayUnion, runTransaction
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  // 🔧 REPLACE with YOUR OWN Firebase project config (see instructions above).
+  const firebaseConfig = {
+   // Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyDf2nlBDiln8ecGEyrG1739lOncbYD4DSM",
+  authDomain: "m3ak-tn.firebaseapp.com",
+  projectId: "m3ak-tn",
+  storageBucket: "m3ak-tn.firebasestorage.app",
+  messagingSenderId: "409923858523",
+  appId: "1:409923858523:web:3e479e1965d2e395444f7e",
+  measurementId: "G-G2D3HK5QG4"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+  };
+
+  const app = initializeApp(firebaseConfig);
+
+  // Exposed on window so the classic script below (which all the onclick=""
+  // handlers rely on) can use them without becoming a module itself.
+  window.db = getFirestore(app);
+  window.fbCollection = collection;
+  window.fbDoc = doc;
+  window.fbSetDoc = setDoc;
+  window.fbUpdateDoc = updateDoc;
+  window.fbDeleteDoc = deleteDoc;
+  window.fbOnSnapshot = onSnapshot;
+  window.fbQuery = query;
+  window.fbOrderBy = orderBy;
+  window.fbArrayUnion = arrayUnion;
+  window.fbRunTransaction = runTransaction;
+
+  window.dispatchEvent(new Event('firebase-ready'));
+</script>
+
 <script>
 /* ===================== DATA ===================== */
 const GOVS = [
- {id:'tunis',fr:'Tunis',ar:'تونس'},{id:'ariana',fr:'Ariana',ar:'أريانة'},{id:'ben_arous',fr:'Ben Arous',ar:'بن عروس'},
- {id:'manouba',fr:'Manouba',ar:'منوبة'},{id:'nabeul',fr:'Nabeul',ar:'نابل'},{id:'zaghouan',fr:'Zaghouan',ar:'زغوان'},
- {id:'bizerte',fr:'Bizerte',ar:'بنزرت'},{id:'beja',fr:'Béja',ar:'باجة'},{id:'jendouba',fr:'Jendouba',ar:'جندوبة'},
- {id:'kef',fr:'Le Kef',ar:'الكاف'},{id:'siliana',fr:'Siliana',ar:'سليانة'},{id:'sousse',fr:'Sousse',ar:'سوسة'},
- {id:'monastir',fr:'Monastir',ar:'المنستير'},{id:'mahdia',fr:'Mahdia',ar:'المهدية'},{id:'sfax',fr:'Sfax',ar:'صفاقس'},
- {id:'kairouan',fr:'Kairouan',ar:'القيروان'},{id:'kasserine',fr:'Kasserine',ar:'القصرين'},{id:'sidi_bouzid',fr:'Sidi Bouzid',ar:'سيدي بوزيد'},
- {id:'gabes',fr:'Gabès',ar:'قابس'},{id:'medenine',fr:'Médenine',ar:'مدنين'},{id:'tataouine',fr:'Tataouine',ar:'تطاوين'},
- {id:'gafsa',fr:'Gafsa',ar:'قفصة'},{id:'tozeur',fr:'Tozeur',ar:'توزر'},{id:'kebili',fr:'Kébili',ar:'قبلي'}
+ {id:'tunis',fr:'Tunis',en:'Tunis',ar:'تونس'},{id:'ariana',fr:'Ariana',en:'Ariana',ar:'أريانة'},{id:'ben_arous',fr:'Ben Arous',en:'Ben Arous',ar:'بن عروس'},
+ {id:'manouba',fr:'Manouba',en:'Manouba',ar:'منوبة'},{id:'nabeul',fr:'Nabeul',en:'Nabeul',ar:'نابل'},{id:'zaghouan',fr:'Zaghouan',en:'Zaghouan',ar:'زغوان'},
+ {id:'bizerte',fr:'Bizerte',en:'Bizerte',ar:'بنزرت'},{id:'beja',fr:'Béja',en:'Beja',ar:'باجة'},{id:'jendouba',fr:'Jendouba',en:'Jendouba',ar:'جندوبة'},
+ {id:'kef',fr:'Le Kef',en:'Kef',ar:'الكاف'},{id:'siliana',fr:'Siliana',en:'Siliana',ar:'سليانة'},{id:'sousse',fr:'Sousse',en:'Sousse',ar:'سوسة'},
+ {id:'monastir',fr:'Monastir',en:'Monastir',ar:'المنستير'},{id:'mahdia',fr:'Mahdia',en:'Mahdia',ar:'المهدية'},{id:'sfax',fr:'Sfax',en:'Sfax',ar:'صفاقس'},
+ {id:'kairouan',fr:'Kairouan',en:'Kairouan',ar:'القيروان'},{id:'kasserine',fr:'Kasserine',en:'Kasserine',ar:'القصرين'},{id:'sidi_bouzid',fr:'Sidi Bouzid',en:'Sidi Bouzid',ar:'سيدي بوزيد'},
+ {id:'gabes',fr:'Gabès',en:'Gabes',ar:'قابس'},{id:'medenine',fr:'Médenine',en:'Medenine',ar:'مدنين'},{id:'tataouine',fr:'Tataouine',en:'Tataouine',ar:'تطاوين'},
+ {id:'gafsa',fr:'Gafsa',en:'Gafsa',ar:'قفصة'},{id:'tozeur',fr:'Tozeur',en:'Tozeur',ar:'توزر'},{id:'kebili',fr:'Kébili',en:'Kebili',ar:'قبلي'}
 ];
 const GOV_MAP = Object.fromEntries(GOVS.map(g=>[g.id,g]));
 const MAP_ROWS = [
@@ -394,23 +465,23 @@ const MAP_ROWS = [
  ['tataouine']
 ];
 const TYPES = [
- {id:'water',icon:'💧',fr:'Eau',ar:'ماء'},
- {id:'ice',icon:'🧊',fr:'Glace',ar:'ثلج'},
- {id:'oxygen',icon:'🫁',fr:'Oxygène',ar:'أكسجين'},
- {id:'fan',icon:'🌀',fr:'Ventilateur',ar:'مروحة'},
- {id:'fire',icon:'🔥',fr:'Aide incendie',ar:'مساعدة حريق'},
- {id:'charge',icon:'🔌',fr:'Recharge téléphone',ar:'شحن الهاتف'},
- {id:'ac',icon:'❄️',fr:'Climatisation',ar:'تكييف'},
- {id:'wifi',icon:'📶',fr:'WiFi',ar:'واي فاي'},
- {id:'elderly',icon:'🧓',fr:'Aide personnes âgées',ar:'مساعدة كبار السن'},
- {id:'other',icon:'🆘',fr:'Autre',ar:'أخرى'}
+ {id:'water',icon:'💧',fr:'Eau',en:'Water',ar:'ماء'},
+ {id:'ice',icon:'🧊',fr:'Glace',en:'Ice',ar:'ثلج'},
+ {id:'oxygen',icon:'🫁',fr:'Oxygène',en:'Oxygen',ar:'أكسجين'},
+ {id:'fan',icon:'🌀',fr:'Ventilateur',en:'Fan',ar:'مروحة'},
+ {id:'fire',icon:'🔥',fr:'Aide incendie',en:'Fire help',ar:'مساعدة حريق'},
+ {id:'charge',icon:'🔌',fr:'Recharge téléphone',en:'Phone charging',ar:'شحن الهاتف'},
+ {id:'ac',icon:'❄️',fr:'Climatisation',en:'Air conditioning',ar:'تكييف'},
+ {id:'wifi',icon:'📶',fr:'WiFi',en:'WiFi',ar:'واي فاي'},
+ {id:'elderly',icon:'🧓',fr:'Aide personnes âgées',en:'Elderly assistance',ar:'مساعدة كبار السن'},
+ {id:'other',icon:'🆘',fr:'Autre',en:'Other',ar:'أخرى'}
 ];
 const TYPE_MAP = Object.fromEntries(TYPES.map(t=>[t.id,t]));
 const URGENCIES = [
- {id:'low',fr:'Faible',ar:'منخفضة'},
- {id:'medium',fr:'Moyenne',ar:'متوسطة'},
- {id:'high',fr:'Élevée',ar:'مرتفعة'},
- {id:'critical',fr:'Critique',ar:'حرجة'}
+ {id:'low',fr:'Faible',en:'Low',ar:'منخفضة'},
+ {id:'medium',fr:'Moyenne',en:'Medium',ar:'متوسطة'},
+ {id:'high',fr:'Élevée',en:'High',ar:'مرتفعة'},
+ {id:'critical',fr:'Critique',en:'Critical',ar:'حرجة'}
 ];
 const URG_MAP = Object.fromEntries(URGENCIES.map(u=>[u.id,u]));
 const URG_RANK = {low:1,medium:2,high:3,critical:4};
@@ -494,6 +565,86 @@ const I18N = {
   toast_offer_accepted:"Offre acceptée. Les coordonnées ont été échangées.",
   rule7_h:"Les coordonnées restent privées jusqu'à l'acceptation",
   rule7_p:"Vos coordonnées ne sont jamais publiques. La personne qui demande de l'aide voit les profils et signalements de celles et ceux qui proposent leur aide, choisit à qui elle fait confiance, puis accepte une offre : c'est seulement à ce moment que les deux coordonnées sont échangées.",
+  sync_error:"Connexion au serveur impossible. Vérifiez votre connexion et réessayez.",
+ },
+ en:{
+  tagline:"— mutual aid, uninterrupted", nav_map:"Map", nav_feed:"Requests", nav_guide:"Guide & Rules", nav_report:"Report",
+  nav_offer_short:"Offer help", nav_ask_short:"Ask for help",
+  eyebrow:"Citizen mutual-aid network — Tunisia",
+  hero_title:"When the power goes out, <span class=\"accent\">we stay connected</span> to each other.",
+  hero_sub:"Power cuts, water cuts, extreme heat: M3ak TN connects people who need help with those who can offer it, governorate by governorate — without ever exposing your exact address.",
+  hero_btn_ask:"🆘 Ask for help", hero_btn_offer:"🤝 Offer help", hero_btn_guide:"📖 Read the guide",
+  stat_active:"active requests", stat_helpers:"help offers sent", stat_govs:"governorates involved",
+  map_title:"Map of Tunisia — live needs", map_clear:"reset",
+  map_hint:"👆 Click a governorate to see its requests.",
+  lvl_none:"No need", lvl_low:"Low", lvl_medium:"Medium", lvl_high:"High", lvl_critical:"Critical",
+  feed_title:"Current help requests", feed_sub:"The precise location is never shown: only the governorate, city, and street are visible.",
+  filter_all_urgency:"All urgency levels", filter_active_only:"Active requests", filter_all_status:"All (including resolved)",
+  guide_title:"Guide & Community Charter", guide_sub:"A few simple rules to keep M3ak TN useful, safe, and trustworthy.",
+  manifesto_1:"<strong>Free help is strongly encouraged.</strong> This crisis is not an opportunity to profit or charge unreasonable amounts — it's an opportunity for Tunisians to support one another.",
+  manifesto_2:"If a contribution is offered, it should remain symbolic and freely agreed to by both parties. Any pressure or excessive pricing can be reported.",
+  rule1_h:"Be respectful", rule1_p:"No insults, harassment, or discrimination. This site is for helping each other, not for arguing.",
+  rule2_h:"Contact info required", rule2_p:"A phone number and a Facebook or Instagram profile are required to publish a request or offer. Without this info, nothing is published.",
+  rule3_h:"Never an exact address", rule3_p:"Only give the governorate, city, and street. Never share your house number or exact location publicly.",
+  rule4_h:"Verify before you trust", rule4_p:"Before accepting a contact, check the number of reports linked to the profile and the phone number shown.",
+  rule5_h:"Report abuse", rule5_p:"Scams, fake profiles, inappropriate behavior: report them to protect the rest of the community.",
+  rule6_h:"Indicate the real urgency", rule6_p:"Reserve the \"Critical\" level for situations threatening fragile health (infants, patients, elderly people, oxygen).",
+  e_police:"Police emergency", e_civil:"Civil protection / Firefighters", e_samu:"SAMU (ambulance)", e_garde:"National Guard",
+  emergency_note:"⚠️ M3ak TN is a citizen initiative, not an official emergency service. In case of life-threatening danger (major fire, serious medical emergency), always call these numbers first.",
+  footer_text:"M3ak TN — a free community platform. No sensitive data is required, only voluntary contact information.",
+  footer_guide:"Guide", footer_report:"Report a profile",
+  modal_ask_title:"Ask for help", modal_ask_sub:"This information will be published publicly, unless stated otherwise.",
+  modal_offer_title:"Current help requests", modal_offer_sub:"Choose a request to respond to.",
+  label_type:"Type of need", label_urgency:"Urgency level", label_gov:"Governorate", label_city:"City / Delegation",
+  label_street:"Street (no exact number)", label_desc:"Description of the need", label_phone:"Phone number",
+  label_fb:"Facebook profile", label_insta:"Instagram profile (optional if Facebook is filled)",
+  hint_contact:"At least one profile (Facebook or Instagram) plus a phone number are required to publish.",
+  hint_location:"Your exact location will never be shown — only governorate, city, and street.",
+  select_placeholder:"— Select —",
+  btn_publish:"Publish request", btn_cancel:"Cancel",
+  err_required:"Please fill in all required fields, including a contact (phone + Facebook or Instagram).",
+  modal_help_title:"Offer my help", modal_help_sub:"Your contact info will be visible to the person who needs help as soon as you send it.",
+  label_your_phone:"Your phone number", label_your_fb:"Your Facebook profile", label_your_insta:"Your Instagram profile (optional if Facebook is filled)",
+  label_message:"Message (optional)", btn_send_help:"Send my help offer",
+  reveal_title:"✅ Offer sent! Here is the contact info of the person to help:",
+  reveal_close:"Close",
+  card_help_btn:"🤝 I can help", card_resolved_btn:"Mark as resolved", card_resolved_tag:"Resolved",
+  helpers_title:"People who offered to help", no_helpers:"No offers yet. Be the first to offer your help!",
+  report_btn:"Report", reports_word:"report(s)",
+  modal_report_title:"Report a profile", modal_report_sub:"Used to flag abusive behavior — scams, harassment, fake listings.",
+  label_report_target:"Phone number or profile link being reported", label_report_reason:"Reason",
+  reason_scam:"Scam / excessive money request", reason_harass:"Disrespectful behavior / harassment",
+  reason_fake:"Fake request / fake offer", reason_other:"Other",
+  label_report_note:"Details (optional)", btn_send_report:"Send report",
+  toast_request_published:"Your request has been published.", toast_help_sent:"Your help offer has been sent.",
+  toast_report_sent:"Report sent. Thank you for looking out for the community.", toast_resolved:"Marked as resolved.",
+  ago_now:"just now", ago_min:"min", ago_h:"h", ago_d:"d",
+  no_requests:"No requests match these filters right now.",
+  no_gov_requests:"No active requests in this governorate right now.",
+  filter_all_types:"All types",
+  offers_empty:"No active requests right now. Check back later, or offer help to the whole community by watching the map.",
+  btn_delete:"🗑️ Delete", btn_delete_help:"Delete my offer",
+  confirm_delete_request:"Permanently delete this help request?",
+  confirm_delete_help:"Delete your help offer?",
+  toast_deleted:"Deleted.",
+  you_tag:"You",
+  my_reports_title:"My submitted reports",
+  no_my_reports:"You haven't reported any profile yet.",
+  confirm_delete_report:"Delete this report?",
+  offer_sent_title:"✅ Your offer has been sent",
+  offer_sent_body:"The person who asked for help will review your profile and any reports, then can accept your offer. You'll be notified right here as soon as that happens — come back and check this request.",
+  offers_count_public:"offer(s) received",
+  someone_offered_masked:"Someone offered to help. Only the person who requested help can see their contact info and accept it.",
+  status_pending:"Awaiting acceptance",
+  status_accepted:"✅ Accepted",
+  btn_accept_offer:"✅ Accept this offer",
+  reveal_title_accepted:"✅ Your offer was accepted! Here is the contact info of the person to help:",
+  owner_note_contact_hidden:"Your contact info stays private: it will only be revealed to the person whose offer you accept.",
+  request_reports_badge:"report(s) linked to this request",
+  toast_offer_accepted:"Offer accepted. Contact info has been exchanged.",
+  rule7_h:"Contact info stays private until accepted",
+  rule7_p:"Your contact info is never public. The person requesting help sees the profiles and reports of those offering help, chooses who to trust, then accepts an offer: only then are both parties' contact info exchanged.",
+  sync_error:"Couldn't connect to the server. Check your connection and try again.",
  },
  ar:{
   tagline:"— تعاون بلا انقطاع", nav_map:"الخريطة", nav_feed:"الطلبات", nav_guide:"الدليل والقواعد", nav_report:"إبلاغ",
@@ -572,10 +723,12 @@ const I18N = {
   toast_offer_accepted:"تم قبول العرض. تم تبادل معلومات التواصل.",
   rule7_h:"تبقى معلومات التواصل خاصة إلى حين القبول",
   rule7_p:"معلومات تواصلك ليست علنية أبدًا. الشخص الذي يطلب المساعدة يرى ملفات وبلاغات من يعرضون المساعدة، يختار من يثق به، ثم يقبل عرضًا: عندها فقط يتم تبادل معلومات التواصل بين الطرفين.",
+  sync_error:"تعذّر الاتصال بالخادم. تحقق من اتصالك وحاول مجددًا.",
  }
 };
 let LANG = 'fr';
 function t(key){ return (I18N[LANG] && I18N[LANG][key]) || I18N.fr[key] || key; }
+function locName(o){ return o[LANG] || o.fr; }
 
 /* ===================== STATE ===================== */
 let requests = [];
@@ -588,44 +741,40 @@ let myRequestIds = [];
 let myHelpKeys = [];   // "requestId::helperId"
 let myReportIds = [];
 
-/* ===================== STORAGE ===================== */
-async function loadAll(){
-  try{
-    const r = await window.storage.get('m3ak_requests', true);
-    requests = r ? JSON.parse(r.value) : [];
-  }catch(e){ requests = []; }
-  try{
-    const rp = await window.storage.get('m3ak_reports', true);
-    reports = rp ? JSON.parse(rp.value) : [];
-  }catch(e){ reports = []; }
-  try{
-    const mine = await window.storage.get('m3ak_my_requests', false);
-    myRequestIds = mine ? JSON.parse(mine.value) : [];
-  }catch(e){ myRequestIds = []; }
-  try{
-    const mh = await window.storage.get('m3ak_my_helps', false);
-    myHelpKeys = mh ? JSON.parse(mh.value) : [];
-  }catch(e){ myHelpKeys = []; }
-  try{
-    const mr = await window.storage.get('m3ak_my_reports', false);
-    myReportIds = mr ? JSON.parse(mr.value) : [];
-  }catch(e){ myReportIds = []; }
+/* ===================== STORAGE =====================
+   Shared data (requests + reports) lives in Firestore so every visitor's
+   browser sees the same live data and gets pushed updates instantly —
+   that's what makes alerts/offers actually reach other people.
+   Ownership lists (which posts are "mine") stay in this browser's
+   localStorage only — they're private to this device on purpose. */
+let realtimeReady = false;
+
+function initRealtime(){
+  const reqQuery = window.fbQuery(window.fbCollection(window.db,'requests'), window.fbOrderBy('createdAt','desc'));
+  window.fbOnSnapshot(reqQuery, snap=>{
+    requests = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    buildTypeFilters(); buildUrgencyFilter(); buildMosaic(); renderFeed();
+  }, err=>{ console.error('requests sync error', err); toast(t('sync_error')); });
+
+  const repQuery = window.fbQuery(window.fbCollection(window.db,'reports'), window.fbOrderBy('createdAt','desc'));
+  window.fbOnSnapshot(repQuery, snap=>{
+    reports = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    renderFeed();
+    const list = document.getElementById('my-reports-list');
+    if(list) list.innerHTML = myReportsListHtml();
+  }, err=>{ console.error('reports sync error', err); });
+
+  realtimeReady = true;
 }
-async function saveRequests(){
-  try{ await window.storage.set('m3ak_requests', JSON.stringify(requests), true); }catch(e){ console.error(e); }
+
+function loadLocalOwnership(){
+  try{ myRequestIds = JSON.parse(localStorage.getItem('m3ak_my_requests')||'[]'); }catch(e){ myRequestIds = []; }
+  try{ myHelpKeys = JSON.parse(localStorage.getItem('m3ak_my_helps')||'[]'); }catch(e){ myHelpKeys = []; }
+  try{ myReportIds = JSON.parse(localStorage.getItem('m3ak_my_reports')||'[]'); }catch(e){ myReportIds = []; }
 }
-async function saveReports(){
-  try{ await window.storage.set('m3ak_reports', JSON.stringify(reports), true); }catch(e){ console.error(e); }
-}
-async function saveMyRequestIds(){
-  try{ await window.storage.set('m3ak_my_requests', JSON.stringify(myRequestIds), false); }catch(e){ console.error(e); }
-}
-async function saveMyHelpKeys(){
-  try{ await window.storage.set('m3ak_my_helps', JSON.stringify(myHelpKeys), false); }catch(e){ console.error(e); }
-}
-async function saveMyReportIds(){
-  try{ await window.storage.set('m3ak_my_reports', JSON.stringify(myReportIds), false); }catch(e){ console.error(e); }
-}
+function saveMyRequestIds(){ try{ localStorage.setItem('m3ak_my_requests', JSON.stringify(myRequestIds)); }catch(e){ console.error(e); } }
+function saveMyHelpKeys(){ try{ localStorage.setItem('m3ak_my_helps', JSON.stringify(myHelpKeys)); }catch(e){ console.error(e); } }
+function saveMyReportIds(){ try{ localStorage.setItem('m3ak_my_reports', JSON.stringify(myReportIds)); }catch(e){ console.error(e); } }
 
 /* ===================== UTIL ===================== */
 function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
@@ -666,6 +815,7 @@ function setLang(l){
   document.documentElement.lang = l;
   document.documentElement.dir = l==='ar' ? 'rtl' : 'ltr';
   document.getElementById('lang-fr').classList.toggle('active', l==='fr');
+  document.getElementById('lang-en').classList.toggle('active', l==='en');
   document.getElementById('lang-ar').classList.toggle('active', l==='ar');
   document.querySelectorAll('[data-i18n]').forEach(el=>{ el.textContent = t(el.getAttribute('data-i18n')); });
   document.querySelectorAll('[data-i18n-html]').forEach(el=>{ el.innerHTML = t(el.getAttribute('data-i18n-html')); });
@@ -694,8 +844,8 @@ function buildMosaic(){
       const {level,count} = govLevel(gid);
       const tile = document.createElement('div');
       tile.className = 'tile'+(level?(' lvl-'+level):'')+(selectedGov===gid?' selected':'');
-      tile.title = (LANG==='ar'?g.ar:g.fr);
-      tile.innerHTML = `<div class="init">${(LANG==='ar'?g.ar:g.fr)}</div>`+(count?`<div class="badge">${count}</div>`:'');
+      tile.title = locName(g);
+      tile.innerHTML = `<div class="init">${locName(g)}</div>`+(count?`<div class="badge">${count}</div>`:'');
       tile.onclick = ()=>{
         const wasSelected = selectedGov===gid;
         selectedGov = wasSelected ? null : gid;
@@ -722,7 +872,7 @@ function buildTypeFilters(){
   TYPES.forEach(ty=>{
     const b = document.createElement('button');
     b.className='chip'+(selectedTypeFilter===ty.id?' active':'');
-    b.textContent = ty.icon+' '+(LANG==='ar'?ty.ar:ty.fr);
+    b.textContent = ty.icon+' '+(locName(ty));
     b.onclick=()=>{ selectedTypeFilter = selectedTypeFilter===ty.id?null:ty.id; buildTypeFilters(); renderFeed(); };
     root.appendChild(b);
   });
@@ -730,7 +880,7 @@ function buildTypeFilters(){
 function buildUrgencyFilter(){
   const sel = document.getElementById('urgency-filter');
   const cur = sel.value;
-  sel.innerHTML = `<option value="">${t('filter_all_urgency')}</option>` + URGENCIES.map(u=>`<option value="${u.id}">${LANG==='ar'?u.ar:u.fr}</option>`).join('');
+  sel.innerHTML = `<option value="">${t('filter_all_urgency')}</option>` + URGENCIES.map(u=>`<option value="${u.id}">${locName(u)}</option>`).join('');
   sel.value = cur || '';
   const st = document.getElementById('status-filter');
   st.options[0].text = t('filter_active_only');
@@ -835,10 +985,10 @@ function renderCard(r){
 
   card.innerHTML = `
     <div class="card-top">
-      <div class="card-type"><span class="icon">${ty.icon}</span>${LANG==='ar'?ty.ar:ty.fr}${isMineReq?` <span style="color:var(--lantern);font-size:11px;">(${t('you_tag')})</span>`:''}</div>
-      <span class="urg-badge lvl-${r.urgency}">${LANG==='ar'?urg.ar:urg.fr}</span>
+      <div class="card-type"><span class="icon">${ty.icon}</span>${locName(ty)}${isMineReq?` <span style="color:var(--lantern);font-size:11px;">(${t('you_tag')})</span>`:''}</div>
+      <span class="urg-badge lvl-${r.urgency}">${locName(urg)}</span>
     </div>
-    <div class="card-loc">📍 ${LANG==='ar'?gov.ar:gov.fr} · ${esc(r.city)} · ${esc(r.street)}</div>
+    <div class="card-loc">📍 ${locName(gov)} · ${esc(r.city)} · ${esc(r.street)}</div>
     <div class="card-desc">${esc(r.desc)}${reportBadge}</div>
     <div class="card-meta">
       <span>${timeAgo(r.createdAt)}</span>
@@ -866,24 +1016,20 @@ function updateStats(){
 }
 
 async function markResolved(id){
-  const r = requests.find(x=>x.id===id);
-  if(!r) return;
-  r.status='resolved';
-  await saveRequests();
-  buildMosaic(); renderFeed();
+  try{ await window.fbUpdateDoc(window.fbDoc(window.db,'requests',id), {status:'resolved'}); }
+  catch(e){ console.error(e); toast(t('sync_error')); return; }
   toast(t('toast_resolved'));
 }
 
 async function deleteRequest(id){
   if(!myRequestIds.includes(id)) return; // safety: only the owner's own device can delete
   if(!confirm(t('confirm_delete_request'))) return;
-  requests = requests.filter(x=>x.id!==id);
-  await saveRequests();
+  try{ await window.fbDeleteDoc(window.fbDoc(window.db,'requests',id)); }
+  catch(e){ console.error(e); toast(t('sync_error')); return; }
   myRequestIds = myRequestIds.filter(x=>x!==id);
-  await saveMyRequestIds();
+  saveMyRequestIds();
   myHelpKeys = myHelpKeys.filter(k=>!k.startsWith(id+'::'));
-  await saveMyHelpKeys();
-  buildMosaic(); renderFeed();
+  saveMyHelpKeys();
   toast(t('toast_deleted'));
 }
 
@@ -891,14 +1037,17 @@ async function deleteHelp(reqId, helperId){
   const key = reqId+'::'+helperId;
   if(!myHelpKeys.includes(key)) return; // safety: only the owner's own device can delete
   if(!confirm(t('confirm_delete_help'))) return;
-  const r = requests.find(x=>x.id===reqId);
-  if(r){
-    r.helpers = (r.helpers||[]).filter(h=>h.id!==helperId);
-    await saveRequests();
-  }
+  try{
+    await window.fbRunTransaction(window.db, async(tx)=>{
+      const ref = window.fbDoc(window.db,'requests',reqId);
+      const snap = await tx.get(ref);
+      if(!snap.exists()) return;
+      const helpers = (snap.data().helpers||[]).filter(h=>h.id!==helperId);
+      tx.update(ref, {helpers});
+    });
+  }catch(e){ console.error(e); toast(t('sync_error')); return; }
   myHelpKeys = myHelpKeys.filter(k=>k!==key);
-  await saveMyHelpKeys();
-  buildMosaic(); renderFeed();
+  saveMyHelpKeys();
   toast(t('toast_deleted'));
 }
 
@@ -908,7 +1057,7 @@ function closeModal(){ document.getElementById('modal-root').innerHTML=''; }
 function openRequestModal(){
   closeMobileNav();
   let chosenType=null, chosenUrg=null;
-  const govOptions = GOVS.map(g=>`<option value="${g.id}">${LANG==='ar'?g.ar:g.fr}</option>`).join('');
+  const govOptions = GOVS.map(g=>`<option value="${g.id}">${locName(g)}</option>`).join('');
   const html = `
   <div class="overlay" onclick="if(event.target===this)closeModal()">
     <div class="modal">
@@ -918,12 +1067,12 @@ function openRequestModal(){
 
       <div class="field"><label>${t('label_type')} <span class="req">*</span></label>
         <div class="type-picker" id="type-picker">
-          ${TYPES.map(ty=>`<button type="button" data-v="${ty.id}"><span class="icon">${ty.icon}</span>${LANG==='ar'?ty.ar:ty.fr}</button>`).join('')}
+          ${TYPES.map(ty=>`<button type="button" data-v="${ty.id}"><span class="icon">${ty.icon}</span>${locName(ty)}</button>`).join('')}
         </div>
       </div>
       <div class="field"><label>${t('label_urgency')} <span class="req">*</span></label>
         <div class="urgency-picker" id="urg-picker">
-          ${URGENCIES.map(u=>`<button type="button" class="sel-${u.id}" data-v="${u.id}">${LANG==='ar'?u.ar:u.fr}</button>`).join('')}
+          ${URGENCIES.map(u=>`<button type="button" class="sel-${u.id}" data-v="${u.id}">${locName(u)}</button>`).join('')}
         </div>
       </div>
       <div class="field-row">
@@ -984,15 +1133,15 @@ async function submitRequest(){
   if(!valid){ document.getElementById('ask-err').style.display='block'; return; }
 
   const newId = uid();
-  requests.push({
-    id: newId, type, urgency, gov, city, street, desc, phone, fb, insta,
+  const data = {
+    type, urgency, gov, city, street, desc, phone, fb, insta,
     status:'active', createdAt: Date.now(), helpers:[]
-  });
-  await saveRequests();
+  };
+  try{ await window.fbSetDoc(window.fbDoc(window.db,'requests',newId), data); }
+  catch(e){ console.error(e); toast(t('sync_error')); return; }
   myRequestIds.push(newId);
-  await saveMyRequestIds();
+  saveMyRequestIds();
   closeModal();
-  buildMosaic(); renderFeed();
   toast(t('toast_request_published'));
   goTo('feed-section');
 }
@@ -1049,11 +1198,12 @@ async function submitHelp(reqId){
   if(!valid){ document.getElementById('help-err').style.display='block'; return; }
 
   const helperId = uid();
-  r.helpers = r.helpers || [];
-  r.helpers.push({id:helperId, phone, fb, insta, msg, status:'pending', at:Date.now()});
-  await saveRequests();
+  const helper = {id:helperId, phone, fb, insta, msg, status:'pending', at:Date.now()};
+  try{
+    await window.fbUpdateDoc(window.fbDoc(window.db,'requests',reqId), {helpers: window.fbArrayUnion(helper)});
+  }catch(e){ console.error(e); toast(t('sync_error')); return; }
   myHelpKeys.push(reqId+'::'+helperId);
-  await saveMyHelpKeys();
+  saveMyHelpKeys();
 
   document.getElementById('help-submit-btn').disabled = true;
   document.getElementById('help-reveal').innerHTML = `
@@ -1061,19 +1211,20 @@ async function submitHelp(reqId){
       <b>${t('offer_sent_title')}</b>
       <div style="color:#d7d3c8;font-size:13px;">${t('offer_sent_body')}</div>
     </div>`;
-  buildMosaic(); renderFeed();
   toast(t('toast_help_sent'));
 }
 
 async function acceptHelper(reqId, helperId){
   if(!myRequestIds.includes(reqId)) return; // safety: only the requester's own device can accept
-  const r = requests.find(x=>x.id===reqId);
-  if(!r) return;
-  const h = (r.helpers||[]).find(x=>x.id===helperId);
-  if(!h) return;
-  h.status = 'accepted';
-  await saveRequests();
-  buildMosaic(); renderFeed();
+  try{
+    await window.fbRunTransaction(window.db, async(tx)=>{
+      const ref = window.fbDoc(window.db,'requests',reqId);
+      const snap = await tx.get(ref);
+      if(!snap.exists()) return;
+      const helpers = (snap.data().helpers||[]).map(h=> h.id===helperId ? {...h, status:'accepted'} : h);
+      tx.update(ref, {helpers});
+    });
+  }catch(e){ console.error(e); toast(t('sync_error')); return; }
   toast(t('toast_offer_accepted'));
 }
 
@@ -1127,13 +1278,12 @@ function openReportModal(prefill){
 async function deleteReport(id){
   if(!myReportIds.includes(id)) return; // safety: only the owner's own device can delete
   if(!confirm(t('confirm_delete_report'))) return;
-  reports = reports.filter(x=>x.id!==id);
-  await saveReports();
+  try{ await window.fbDeleteDoc(window.fbDoc(window.db,'reports',id)); }
+  catch(e){ console.error(e); toast(t('sync_error')); return; }
   myReportIds = myReportIds.filter(x=>x!==id);
-  await saveMyReportIds();
+  saveMyReportIds();
   const list = document.getElementById('my-reports-list');
   if(list) list.innerHTML = myReportsListHtml();
-  renderFeed();
   toast(t('toast_deleted'));
 }
 
@@ -1143,24 +1293,27 @@ async function submitReport(){
   const note = document.getElementById('r-note').value.trim();
   if(!target){ document.getElementById('report-err').style.display='block'; return; }
   const reportId = uid();
-  reports.push({id:reportId, target, reason, note, createdAt:Date.now()});
-  await saveReports();
+  try{ await window.fbSetDoc(window.fbDoc(window.db,'reports',reportId), {target, reason, note, createdAt:Date.now()}); }
+  catch(e){ console.error(e); toast(t('sync_error')); return; }
   myReportIds.push(reportId);
-  await saveMyReportIds();
+  saveMyReportIds();
   closeModal();
-  renderFeed();
   toast(t('toast_report_sent'));
 }
 
 /* ===================== INIT ===================== */
-async function init(){
-  await loadAll();
+function init(){
+  loadLocalOwnership();
   buildTypeFilters();
   buildUrgencyFilter();
-  buildMosaic();
-  renderFeed();
+  initRealtime(); // subscribes to live data; first snapshot triggers the first render
 }
-init();
+// The Firebase module script (type="module") always finishes after this
+// classic script has run, so we wait for its "ready" signal instead of
+// calling init() directly — this avoids a race where init() would run
+// before window.db exists.
+if(window.db){ init(); } else { window.addEventListener('firebase-ready', init); }
+
 </script>
 </body>
 </html>
