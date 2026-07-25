@@ -927,9 +927,14 @@ const I18N = {
   my_requests_heading:"Mes demandes d'aide",
   my_offers_heading:"Mes offres d'aide",
   toast_phone_linked:"Numéro synchronisé ! Vos annonces sont accessibles.",
-    nav_admin:"Admin",
-    admin_modal_title:"Espace Propriétaire & Modération",
-    admin_modal_sub:"",  notice_banner_text:"<strong>Gestion & Sécurité :</strong> Cliquez sur <strong>\"Mes annonces\"</strong> dans le menu pour suivre ou annuler vos publications, ou sur <strong>\"Signaler\"</strong> pour signaler un profil suspect.",  tab_kind_demand:"Demande d'aide",  tab_kind_offer:"Offre d'aide",  modal_offer_post_title:"Proposer une offre d'aide",  modal_offer_post_sub:"Publiez les ressources, matériel ou services que vous mettez à disposition des citoyens.",  modal_request_offer_title:"Demander cette offre d'aide",  modal_request_offer_sub:"Envoyez un message à la personne ou l'organisme proposant cette aide.",  label_entity:"Qui publie ?",  label_offer_type:"Domaine d'aide proposé",  label_offered_item:"Article ou matériel proposé",  placeholder_offered_item:"Ex: Appareil à oxygène 5L, Groupe électrogène, Bidons d'eau...",  label_units_optional:"Quantité / Unités (Optionnel)",  placeholder_units:"Ex: 2 appareils, 10 packs...",  label_name_optional:"Nom / Prénom ou Organisme (Optionnel)",  label_your_name_optional:"Votre nom ou organisme (Optionnel)",  placeholder_name:"Ex: Mohamed, Pharmacie Yasmine, Association...",  label_offer_desc:"Description de l'offre",  btn_publish_offer:"Publier l'offre",  btn_request_this_offer:"📩 Demander cette offre",  btn_send_claim:"Envoyer la demande",  placeholder_claim_msg:"Précisez votre besoin pour cet article ou matériel...",  kind_demand_badge:"Demande d'aide",  kind_offer_badge:"Offre d'aide",  offered_label:"Offre",  filter_kind_all:"Toutes les annonces",  filter_kind_demand:"🆘 Demandes d'aide",  filter_kind_offer:"🤝 Offres d'aide",  theme_light:"Clair",  theme_dark:"Sombre",  admin_visits_label:"Visites totales sur le site",  toast_offer_published:"Votre offre d'aide a été publiée avec succès !",
+  btn_offer_help:"🤝 Proposer de l'aide",
+  helpers_section_title:"👥 Offres d'aide reçues",
+  helpers_section_title_offer:"📩 Demandes reçues pour cette offre",
+  other_helpers_count:"autre(s) offre(s) d'aide reçue(s)",
+  other_claims_count:"autre(s) demande(s) enregistrée(s)",
+  nav_admin:"Admin",
+  admin_modal_title:"Espace Propriétaire & Modération",
+  admin_modal_sub:"",  notice_banner_text:"<strong>Gestion & Sécurité :</strong> Cliquez sur <strong>\"Mes annonces\"</strong> dans le menu pour suivre ou annuler vos publications, ou sur <strong>\"Signaler\"</strong> pour signaler un profil suspect.",  tab_kind_demand:"Demande d'aide",  tab_kind_offer:"Offre d'aide",  modal_offer_post_title:"Proposer une offre d'aide",  modal_offer_post_sub:"Publiez les ressources, matériel ou services que vous mettez à disposition des citoyens.",  modal_request_offer_title:"Demander cette offre d'aide",  modal_request_offer_sub:"Envoyez un message à la personne ou l'organisme proposant cette aide.",  label_entity:"Qui publie ?",  label_offer_type:"Domaine d'aide proposé",  label_offered_item:"Article ou matériel proposé",  placeholder_offered_item:"Ex: Appareil à oxygène 5L, Groupe électrogène, Bidons d'eau...",  label_units_optional:"Quantité / Unités (Optionnel)",  placeholder_units:"Ex: 2 appareils, 10 packs...",  label_name_optional:"Nom / Prénom ou Organisme (Optionnel)",  label_your_name_optional:"Votre nom ou organisme (Optionnel)",  placeholder_name:"Ex: Mohamed, Pharmacie Yasmine, Association...",  label_offer_desc:"Description de l'offre",  btn_publish_offer:"Publier l'offre",  btn_request_this_offer:"📩 Demander cette offre",  btn_send_claim:"Envoyer la demande",  placeholder_claim_msg:"Précisez votre besoin pour cet article ou matériel...",  kind_demand_badge:"Demande d'aide",  kind_offer_badge:"Offre d'aide",  offered_label:"Offre",  filter_kind_all:"Toutes les annonces",  filter_kind_demand:"🆘 Demandes d'aide",  filter_kind_offer:"🤝 Offres d'aide",  theme_light:"Clair",  theme_dark:"Sombre",  admin_visits_label:"Visites totales sur le site",  toast_offer_published:"Votre offre d'aide a été publiée avec succès !",
     admin_passcode_label:"Code secret d'administration",
     admin_passcode_hint:"Saisissez le code secret réservé à la modération.",
     admin_change_pass_label:"Personnaliser votre code secret d'administration",
@@ -1047,6 +1052,46 @@ const I18N = {
   admin_change_pass_success:"New admin passcode saved successfully!",
   admin_btn_unlock:"🔓 Unlock Admin Mode",
   admin_btn_lock:"🔒 Lock Admin Mode",
+  btn_offer_help:"🤝 Offer help",
+  helpers_section_title:"👥 Help offers received",
+  helpers_section_title_offer:"📩 Requests received for this offer",
+  other_helpers_count:"other help offer(s) received",
+  other_claims_count:"other request(s) recorded",
+  tab_kind_demand:"Help Request",
+  tab_kind_offer:"Help Offer",
+  kind_demand_badge:"Help Request",
+  kind_offer_badge:"Help Offer",
+  modal_offer_post_title:"Provide a Help Offer",
+  modal_offer_post_sub:"Publish resources, equipment, or services you are making available to citizens.",
+  modal_request_offer_title:"Request this Help Offer",
+  modal_request_offer_sub:"Send a message to the person or organization providing this help.",
+  label_entity:"Who is posting?",
+  label_offer_type:"Type of help offered",
+  label_offered_item:"Item or equipment offered",
+  placeholder_offered_item:"E.g.: 5L Oxygen Concentrator, Generator, Water containers...",
+  label_units_optional:"Quantity / Units (Optional)",
+  placeholder_units:"E.g.: 2 devices, 10 packs...",
+  label_name_optional:"Name / Organization (Optional)",
+  label_your_name_optional:"Your Name or Organization (Optional)",
+  placeholder_name:"E.g.: Mohamed, Yasmine Pharmacy, NGO...",
+  label_offer_desc:"Description of the offer",
+  btn_publish_offer:"Publish Offer",
+  btn_request_this_offer:"📩 Request this offer",
+  btn_send_claim:"Send request",
+  placeholder_claim_msg:"Specify your need for this item or equipment...",
+  offered_label:"Offer",
+  filter_kind_all:"All Posts",
+  filter_kind_demand:"🆘 Help Requests",
+  filter_kind_offer:"🤝 Help Offers",
+  toast_offer_published:"Your help offer has been published successfully!",
+  nav_admin:"Admin",
+  admin_modal_sub:"",
+  admin_passcode_label:"Admin secret passcode",
+  admin_passcode_hint:"Enter the secret code reserved for moderation.",
+  admin_wrong_code:"Incorrect admin passcode.",
+  admin_login_success:"Admin mode activated successfully!",
+  admin_delete_req_btn:"🗑️ Delete request (Admin)",
+  admin_delete_offer_btn:"🗑️ Delete offer (Admin)"
  },
  ar:{
    tagline:"— تعاون بلا انقطاع", nav_map:"الخريطة", nav_feed:"الطلبات", nav_guide:"الدليل والقواعد", nav_report:"إبلاغ",
@@ -1151,7 +1196,47 @@ const I18N = {
    admin_change_pass_btn:"💾 حفظ الرمز الجديد",
    admin_change_pass_success:"تم حفظ رمز الإدارة الجديد بنجاح!",
    admin_btn_unlock:"🔓 فتح وضع الإدارة",
-   admin_btn_lock:"🔒 قفل وضع الإدارة"
+   admin_btn_lock:"🔒 قفل وضع الإدارة",
+   btn_offer_help:"🤝 تقديم المساعدة",
+   helpers_section_title:"👥 عروض المساعدة الواردة",
+   helpers_section_title_offer:"📩 الطلبات الواردة لهذا العرض",
+   other_helpers_count:"عرض (عروض) مساعدة أخرى واردة",
+   other_claims_count:"طلب (طلبات) آخر مسجل",
+   tab_kind_demand:"طلب مساعدة",
+   tab_kind_offer:"عرض مساعدة",
+   kind_demand_badge:"طلب مساعدة",
+   kind_offer_badge:"عرض مساعدة",
+   modal_offer_post_title:"تقديم عرض مساعدة",
+   modal_offer_post_sub:"انشر الموارد أو المعدات أو الخدمات التي تضعها على ذمة المواطنين.",
+   modal_request_offer_title:"طلب هذا العرض للمساعدة",
+   modal_request_offer_sub:"أرسل رسالة للشخص أو الجهة المقدمة لهذه المساعدة.",
+   label_entity:"من ينشر؟",
+   label_offer_type:"مجال المساعدة المعروضة",
+   label_offered_item:"المادة أو المعدات المعروضة",
+   placeholder_offered_item:"مثال: مكثف أكسجين 5 لتر، مولد كهرباء، أوعية ماء...",
+   label_units_optional:"الكمية / الوحدات (اختياري)",
+   placeholder_units:"مثال: جهازان، 10 حزم...",
+   label_name_optional:"الاسم / المنظمة (اختياري)",
+   label_your_name_optional:"اسمك أو اسم جهتك (اختياري)",
+   placeholder_name:"مثال: محمد، صيدلية ياسمين، جمعية...",
+   label_offer_desc:"وصف العرض",
+   btn_publish_offer:"نشر العرض",
+   btn_request_this_offer:"📩 طلب هذه المساعدة",
+   btn_send_claim:"إرسال الطلب",
+   placeholder_claim_msg:"حدد احتياجك لهذه المادة أو المعدات...",
+   offered_label:"عرض",
+   filter_kind_all:"كل الإعلانات",
+   filter_kind_demand:"🆘 طلبات المساعدة",
+   filter_kind_offer:"🤝 عروض المساعدة",
+   toast_offer_published:"تم نشر عرض المساعدة بنجاح!",
+   nav_admin:"الإدارة",
+   admin_modal_sub:"",
+   admin_passcode_label:"الرمز السري للإدارة",
+   admin_passcode_hint:"أدخل الرمز السري المخصص للإشراف.",
+   admin_wrong_code:"رمز الإدارة غير صحيح.",
+   admin_login_success:"تم تفعيل وضع الإدارة بنجاح!",
+   admin_delete_req_btn:"🗑️ حذف الطلب (إدارة)",
+   admin_delete_offer_btn:"🗑️ حذف العرض (إدارة)"
  }
 };
 let LANG = 'fr';
@@ -1498,7 +1583,7 @@ function renderCard(r) {
       </div>`);
     }
     if (otherCount > 0) {
-      parts.push(`<div style="font-size:12.5px;color:var(--stone-dim);">${otherCount} ${isOffer ? 'autre(s) demande(s) enregistrée(s)' : t('other_helpers_count')}</div>`);
+      parts.push(`<div style="font-size:12.5px;color:var(--stone-dim);">${otherCount} ${isOffer ? t('other_claims_count') : t('other_helpers_count')}</div>`);
     }
     helpersHtml = parts.join('');
   }
@@ -1560,7 +1645,7 @@ function renderCard(r) {
 
     <div style="border-top:1px solid var(--line);padding-top:10px;margin-top:10px;">
       <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:var(--stone-dim);margin-bottom:6px;">
-        ${isOffer ? '📩 Demandes reçues pour cette offre' : t('helpers_section_title')}
+        ${isOffer ? t('helpers_section_title_offer') : t('helpers_section_title')}
       </div>
       ${helpersHtml}
     </div>
@@ -1795,7 +1880,7 @@ function openAdminModal(){
       const desc = r.desc || r.item || '';
       return `<div class="helper-row" style="flex-wrap:wrap;gap:8px;align-items:center;">
         <div class="hcontact" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-          <span>${isOffer ? '🤝 [Offre]' : '🆘 [Demande]'} 📍 ${locName(gObj)}</span>
+          <span>${isOffer ? '🤝 [' + t('kind_offer_badge') + ']' : '🆘 [' + t('kind_demand_badge') + ']'} 📍 ${locName(gObj)}</span>
           <span style="color:var(--stone-dim);font-size:12px;">"${esc(desc.slice(0,40))}${desc.length>40?'...':''}"</span>
         </div>
         <div style="margin-left:auto;">
